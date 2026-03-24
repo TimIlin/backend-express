@@ -1,38 +1,48 @@
+const sqlite3 = require('sqlite3').verbose()
+const db = new sqlite3.Database('mydb.db');
+db.run(`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name text)`);
+
 const express = require('express');
 const router = express.Router();
 
-let users = [
-  { id: 1, name: "Ильин Тимофей" },
-  { id: 2, name: "Мишуков Егор" }
-];
-let lastId = 2;
 
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.json(
-    {items: users}
-  );
+router.get('/', function (req, res, next) {
+  db.all("SELECT id, name FROM users", [], (err, rows) => {
+    if (err) {
+      console.log(err);
+      return
+    }
+    res.send(rows);
+  });
 });
 
-router.get('/:id', function(req, res, next) {
+router.get('/:id', function (req, res, next) {
   const id = parseInt(req.params.id);
-  const user = users.find(u => u.id === id);
-  
-  if (!user) {
-    return res.status(404).send('User not found');
-  }
-  res.json(user);
+  db.all(`SELECT id, name FROM users where id = ${id}`, [], (err, rows) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    if (!rows) {
+      return res.status(404).send('User not found');
+    }
+    res.json(rows);
+  });
 });
 
-router.post('/',function(req, res, next){
+router.post('/', function (req, res, next) {
   const { name } = req.body;
-  const newUser = {
-    id: ++lastId,
-    name: name
-  };
-  users.push(newUser);
-  res.status(201).json(newUser);
+  const insert = "INSERT INTO users (name) VALUES (?)";
+  db.run(insert, [name], function (err) {
+    res.status(201).json({
+      id: this.lastID,
+      name: name
+    });
+  });
 });
 
 module.exports = router;
