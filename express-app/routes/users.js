@@ -22,7 +22,7 @@ router.get('/', function (req, res, next) {
 
 router.get('/:id', function (req, res, next) {
   const id = parseInt(req.params.id);
-  db.all(`SELECT id, name FROM users where id = ${id}`, [], (err, rows) => {
+  db.get(`SELECT id, name FROM users where id = ${id}`, [], (err, rows) => {
     if (err) {
       console.log(err);
       return;
